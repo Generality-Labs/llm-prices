@@ -73,6 +73,35 @@ describe("createServer", () => {
     expect(result.content[0]?.text).toContain('"openai/gpt-4o":');
   });
 
+  it("includes matched model metadata when MCP debug output is requested", async () => {
+    const server = createServer(env) as unknown as {
+      _registeredTools: Record<string, { handler: (args: unknown) => Promise<unknown> }>;
+    };
+
+    const result = (await server._registeredTools.export_inspect_costs.handler({
+      models: ["anthropic/claude-sonnet-4-5"],
+      format: "json",
+      debug: true,
+    })) as {
+      structuredContent: { format: string; costs: Record<string, unknown> };
+    };
+
+    expect(result.structuredContent).toEqual({
+      format: "json",
+      costs: {
+        "anthropic/claude-sonnet-4-5": {
+          input: 3,
+          output: 15,
+          input_cache_write: 3.75,
+          input_cache_read: 0.3,
+          _requested_model: "anthropic/claude-sonnet-4-5",
+          _matched_key: "claude-sonnet-4-5",
+          _matched_provider: "anthropic",
+        },
+      },
+    });
+  });
+
   it("returns MCP errors for unresolved inspect model names", async () => {
     const server = createServer(env) as unknown as {
       _registeredTools: Record<string, { handler: (args: unknown) => Promise<unknown> }>;

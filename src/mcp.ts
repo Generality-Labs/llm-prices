@@ -77,11 +77,14 @@ export function createServer(env: Env): McpServer {
       inputSchema: z.object({
         models: z.array(z.string()).min(1),
         format: z.enum(["json", "yaml"]).optional(),
+        debug: z.boolean().optional(),
       }),
     },
     async (args) => {
       const models = await getModels(env);
-      const result = buildInspectCostExport(models, args.models);
+      const result = buildInspectCostExport(models, args.models, {
+        includeDebugInfo: args.debug === true,
+      });
       const format = args.format ?? "json";
 
       if (result.unresolved.length > 0) {

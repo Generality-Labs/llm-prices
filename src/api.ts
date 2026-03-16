@@ -196,8 +196,12 @@ export async function handleApiRequest(
       return json({ error: "format must be either 'json' or 'yaml'" }, 400);
     }
 
+    const debug = url.searchParams.get("debug") === "1";
+
     const models = await getModels(env);
-    const result = buildInspectCostExport(models, requestedModels);
+    const result = buildInspectCostExport(models, requestedModels, {
+      includeDebugInfo: debug,
+    });
 
     if (result.unresolved.length > 0) {
       return json(

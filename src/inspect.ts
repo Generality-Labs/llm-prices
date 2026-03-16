@@ -5,6 +5,9 @@ export interface InspectModelCost {
   output: number;
   input_cache_write: number;
   input_cache_read: number;
+  _requested_model?: string;
+  _matched_key?: string;
+  _matched_provider?: string;
 }
 
 export interface InspectResolutionError {
@@ -15,6 +18,10 @@ export interface InspectResolutionError {
 export interface InspectExportResult {
   costs: Record<string, InspectModelCost>;
   unresolved: InspectResolutionError[];
+}
+
+export interface InspectExportOptions {
+  includeDebugInfo?: boolean;
 }
 
 /**
@@ -460,7 +467,8 @@ export function toInspectModelCost(model: ModelEntry): InspectModelCost {
  */
 export function buildInspectCostExport(
   models: ModelEntry[],
-  requestedModels: string[]
+  requestedModels: string[],
+  options: InspectExportOptions = {}
 ): InspectExportResult {
   const costs: Record<string, InspectModelCost> = {};
   const unresolved: InspectResolutionError[] = [];
@@ -480,7 +488,16 @@ export function buildInspectCostExport(
       continue;
     }
 
-    costs[trimmed] = toInspectModelCost(resolved);
+    costs[trimmed] = {
+      ...toInspectModelCost(resolved),
+      ...(options.includeDebugInfo
+        ? {
+            _requested_model: trimmed,
+            _matched_key: resolved.key,
+            _matched_provider: resolved.litellm_provider ?? "",
+          }
+        : {}),
+    };
   }
 
   return { costs, unresolved };
@@ -495,9 +512,23 @@ export function renderInspectCostsYaml(
   costs: Record<string, InspectModelCost>
 ): string {
   const body = Object.entries(costs)
-    .map(
-      ([model, cost]) =>
-        `${JSON.stringify(model)}:\n  input: ${formatYamlNumber(cost.input)}\n  output: ${formatYamlNumber(cost.output)}\n  input_cache_write: ${formatYamlNumber(cost.input_cache_write)}\n  input_cache_read: ${formatYamlNumber(cost.input_cache_read)}`
+    .map(([model, cost]) =>
+      [
+        `${JSON.stringify(model)}:`,
+        `  input: ${formatYamlNumber(cost.input)}`,
+        `  output: ${formatYamlNumber(cost.output)}`,
+        `  input_cache_write: ${formatYamlNumber(cost.input_cache_write)}`,
+        `  input_cache_read: ${formatYamlNumber(cost.input_cache_read)}`,
+        ...(cost._requested_model
+          ? [`  _requested_model: ${JSON.stringify(cost._requested_model)}`]
+          : []),
+        ...(cost._matched_key
+          ? [`  _matched_key: ${JSON.stringify(cost._matched_key)}`]
+          : []),
+        ...(cost._matched_provider
+          ? [`  _matched_provider: ${JSON.stringify(cost._matched_provider)}`]
+          : []),
+      ].join("\n")
     )
     .join("\n");
 

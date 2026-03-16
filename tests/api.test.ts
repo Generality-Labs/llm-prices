@@ -121,6 +121,44 @@ describe("handleApiRequest", () => {
     });
   });
 
+  it("includes matched model metadata when inspect debug output is requested", async () => {
+    const response = await handleApiRequest(
+      new URL(
+        "https://example.com/api/inspect-costs?model=anthropic/claude-sonnet-4.5&debug=1"
+      ),
+      env
+    );
+
+    expect(response).not.toBeNull();
+    expect(response?.status).toBe(200);
+    await expect(response?.json()).resolves.toEqual({
+      "anthropic/claude-sonnet-4.5": {
+        input: 3,
+        output: 15,
+        input_cache_write: 3.75,
+        input_cache_read: 0.3,
+        _requested_model: "anthropic/claude-sonnet-4.5",
+        _matched_key: "claude-sonnet-4-5",
+        _matched_provider: "anthropic",
+      },
+    });
+  });
+
+  it("includes matched model metadata in YAML when inspect debug output is requested", async () => {
+    const response = await handleApiRequest(
+      new URL(
+        "https://example.com/api/inspect-costs?model=anthropic/claude-sonnet-4.5&format=yaml&debug=1"
+      ),
+      env
+    );
+
+    expect(response).not.toBeNull();
+    expect(response?.status).toBe(200);
+    await expect(response?.text()).resolves.toBe(
+      '"anthropic/claude-sonnet-4.5":\n  input: 3.00\n  output: 15.00\n  input_cache_write: 3.75\n  input_cache_read: 0.30\n  _requested_model: "anthropic/claude-sonnet-4.5"\n  _matched_key: "claude-sonnet-4-5"\n  _matched_provider: "anthropic"\n'
+    );
+  });
+
   it("returns a 400 when no inspect model names are provided", async () => {
     const response = await handleApiRequest(
       new URL("https://example.com/api/inspect-costs"),

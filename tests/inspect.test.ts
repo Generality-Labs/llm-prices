@@ -113,6 +113,25 @@ describe("buildInspectCostExport", () => {
     });
   });
 
+  it("includes matched model metadata when debug output is enabled", () => {
+    const result = buildInspectCostExport(
+      models,
+      ["anthropic/claude-sonnet-4.5"],
+      { includeDebugInfo: true }
+    );
+
+    expect(result.unresolved).toEqual([]);
+    expect(result.costs["anthropic/claude-sonnet-4.5"]).toEqual({
+      input: 3,
+      output: 15,
+      input_cache_write: 3.75,
+      input_cache_read: 0.3,
+      _requested_model: "anthropic/claude-sonnet-4.5",
+      _matched_key: "claude-sonnet-4-5",
+      _matched_provider: "anthropic",
+    });
+  });
+
   it("returns candidate keys for unresolved model names", () => {
     const result = buildInspectCostExport(models, ["azureai/Llama-3.3-70B-Instruct"]);
 
@@ -144,6 +163,24 @@ describe("renderInspectCostsYaml", () => {
 
     expect(yaml).toBe(
       '"openai/gpt-4o":\n  input: 2.50\n  output: 10.00\n  input_cache_write: 0.00\n  input_cache_read: 1.25\n'
+    );
+  });
+
+  it("renders matched model metadata in YAML when present", () => {
+    const yaml = renderInspectCostsYaml({
+      "anthropic/claude-sonnet-4.5": {
+        input: 3,
+        output: 15,
+        input_cache_write: 3.75,
+        input_cache_read: 0.3,
+        _requested_model: "anthropic/claude-sonnet-4.5",
+        _matched_key: "claude-sonnet-4-5",
+        _matched_provider: "anthropic",
+      },
+    });
+
+    expect(yaml).toBe(
+      '"anthropic/claude-sonnet-4.5":\n  input: 3.00\n  output: 15.00\n  input_cache_write: 3.75\n  input_cache_read: 0.30\n  _requested_model: "anthropic/claude-sonnet-4.5"\n  _matched_key: "claude-sonnet-4-5"\n  _matched_provider: "anthropic"\n'
     );
   });
 });
