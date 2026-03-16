@@ -129,6 +129,32 @@ inspect eval ctf.py --model-cost-config pricing.yaml --cost-limit 2.00
 curl "https://llm-prices.llm-prices.workers.dev/api/inspect-costs?models=openai/gpt-4o,google/gemini-2.5-pro,openrouter/gryphe/mythomax-l2-13b&format=json" -o pricing.json
 ```
 
+If you want a Claude, GPT, or Gemini model but are not sure which exact model key to use, search the catalog first and pick the model yourself. You can also add `sort` (for example `sort=key&order=desc` or `sort=input_cost_per_token&order=asc`) to make the list easier to scan:
+
+```bash
+curl "https://llm-prices.llm-prices.workers.dev/api/models?provider=anthropic&q=claude&sort=key&order=desc"
+```
+
+```bash
+curl "https://llm-prices.llm-prices.workers.dev/api/models?provider=openai&q=gpt&sort=key&order=desc"
+```
+
+```bash
+curl "https://llm-prices.llm-prices.workers.dev/api/models?provider=gemini&q=gemini&sort=key&order=desc"
+```
+
+Then request Inspect-formatted pricing for the exact model you selected:
+
+```bash
+curl "https://llm-prices.llm-prices.workers.dev/api/inspect-costs?model=anthropic/claude-sonnet-4-5&format=yaml" -o pricing.yaml
+```
+
+If you want to confirm which cached dataset key was matched, add `debug=1`:
+
+```bash
+curl "https://llm-prices.llm-prices.workers.dev/api/inspect-costs?model=anthropic/claude-sonnet-4-5&format=yaml&debug=1" -o pricing-debug.yaml
+```
+
 Provider naming notes:
 
 - Use Inspect-style provider prefixes such as `openai`, `anthropic`, `google`, `openrouter`, `groq`, `ollama`, `bedrock`, `azureai`, `cf`, `fireworks`, `together`, and `perplexity`.
