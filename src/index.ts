@@ -12,6 +12,12 @@ export default {
   ): Promise<Response> {
     const url = new URL(request.url);
 
+    // The deploy pipeline smoke-tests this endpoint after every deploy — keep
+    // it cheap and dependency-free.
+    if (request.method === "GET" && url.pathname === "/health") {
+      return Response.json({ status: "ok" });
+    }
+
     // CORS preflight
     if (request.method === "OPTIONS") {
       return new Response(null, {
@@ -68,7 +74,7 @@ export default {
   },
 
   async scheduled(
-    _event: ScheduledEvent,
+    _controller: ScheduledController,
     env: Env,
     ctx: ExecutionContext
   ): Promise<void> {
