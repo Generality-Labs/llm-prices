@@ -8,6 +8,9 @@ repos:
     rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # v6.0.0
     hooks:
       - id: check-added-large-files
+        # The pricing snapshot in resources/ is data, not code, and is
+        # already committed at ~1.4 MB.
+        exclude: ^resources/
       - id: check-json
         # tsconfig.json is JSONC: TypeScript has always allowed comments there,
         # and Biome parses it as such. check-json uses the stdlib json module,
