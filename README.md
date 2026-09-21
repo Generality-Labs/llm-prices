@@ -34,7 +34,7 @@ The repository is hosted at [Generality-Labs/llm-prices](https://github.com/Gene
 
 ### GitHub Actions
 
-Pull requests and pushes to `main` run the tests, TypeScript checks, and a deployment dry run.
+Pull requests and pushes to `main` run the tests, TypeScript checks, and Worker bundle validation using `wrangler deploy --dry-run`. This validation does not publish a deployment.
 
 ### Automatic deployment
 

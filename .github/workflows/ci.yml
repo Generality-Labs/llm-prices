@@ -27,4 +27,5 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npx tsc --noEmit
-      - run: npx wrangler deploy --dry-run
+      - name: Validate Worker bundle (no deployment)
+        run: npx wrangler deploy --dry-run
