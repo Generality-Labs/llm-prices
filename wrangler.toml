@@ -1,7 +1,14 @@
 name = "llm-prices"
+account_id = "4dd4a6b03a79f452ebc112658643f02a"
 main = "src/index.ts"
 compatibility_date = "2024-12-30"
 compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+preview_urls = false
+
+[[routes]]
+pattern = "llm-prices.generality.org"
+custom_domain = true
 
 [triggers]
 crons = ["0 */6 * * *"]
@@ -16,4 +23,4 @@ fallthrough = false
 
 [[kv_namespaces]]
 binding = "MODEL_PRICES"
-id = "73eb710c056640bbb3e4e49968e51b22"
+id = "a11d123eae0c4e95a67af8d8566487ae"

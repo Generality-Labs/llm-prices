@@ -14,10 +14,13 @@ if (!token) {
   process.exit(1);
 }
 
-const url = `https://llm-prices.llm-prices.workers.dev/api/refresh?token=${token}`;
+const url = "https://llm-prices.generality.org/api/refresh";
 console.log("Refreshing model prices...");
 
-const res = await fetch(url, { method: "POST" });
+const res = await fetch(url, {
+  method: "POST",
+  headers: { Authorization: `Bearer ${token}` },
+});
 const data = await res.json();
 console.log(JSON.stringify(data, null, 2));
 
