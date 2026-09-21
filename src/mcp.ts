@@ -1,10 +1,10 @@
-import { createMcpHandler } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { createMcpHandler } from "agents/mcp";
 import { z } from "zod";
 import { applyFilters } from "./api";
 import { getMeta, getModels } from "./data";
 import { buildInspectCostExport, renderInspectCostsYaml } from "./inspect";
-import { Env, FilterParams } from "./types";
+import type { Env, FilterParams } from "./types";
 
 export function createServer(env: Env): McpServer {
   const server = new McpServer({
@@ -66,7 +66,7 @@ export function createServer(env: Env): McpServer {
         ],
         structuredContent: result,
       };
-    }
+    },
   );
 
   server.registerTool(
@@ -133,7 +133,7 @@ export function createServer(env: Env): McpServer {
           costs: result.costs,
         },
       };
-    }
+    },
   );
 
   server.registerTool(
@@ -143,9 +143,7 @@ export function createServer(env: Env): McpServer {
     },
     async () => {
       const models = await getModels(env);
-      const providers = [...new Set(models.map((m) => m.litellm_provider))]
-        .filter(Boolean)
-        .sort();
+      const providers = [...new Set(models.map((m) => m.litellm_provider))].filter(Boolean).sort();
       const result = { providers };
 
       return {
@@ -157,7 +155,7 @@ export function createServer(env: Env): McpServer {
         ],
         structuredContent: result,
       };
-    }
+    },
   );
 
   server.registerTool(
@@ -179,7 +177,7 @@ export function createServer(env: Env): McpServer {
         ],
         structuredContent: result,
       };
-    }
+    },
   );
 
   server.registerTool(
@@ -203,7 +201,7 @@ export function createServer(env: Env): McpServer {
         ],
         structuredContent: result,
       };
-    }
+    },
   );
 
   return server;
@@ -212,7 +210,7 @@ export function createServer(env: Env): McpServer {
 export async function handleMcpRequest(
   request: Request,
   env: Env,
-  ctx: ExecutionContext
+  ctx: ExecutionContext,
 ): Promise<Response | null> {
   const url = new URL(request.url);
   if (url.pathname !== "/mcp") return null;

@@ -1,7 +1,7 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.5/schema.json",
   "files": {
-    "includes": ["**", "!**/.wrangler", "!resources/**"]
+    "includes": ["**", "!**/.wrangler", "!resources"]
   },
   "vcs": {
     "enabled": true,

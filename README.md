@@ -25,8 +25,7 @@ npm install
 npm run dev
 ```
 
-On first run, visit `http://localhost:8787` — the table will be empty until data is loaded.
-Trigger a data refresh by calling the scheduled handler (wrangler dev supports this via the dashboard).
+On first run, visit `http://localhost:8787` — the table will be empty until data is loaded. Trigger a data refresh by calling the scheduled handler (wrangler dev supports this via the dashboard).
 
 ## Deploy
 
@@ -84,18 +83,18 @@ The refresh script sends the secret in an Authorization header to `https://llm-p
 
 Query parameters:
 
-| Param | Description |
-| ----- | ----------- |
-| `q` | Search model name or provider; supports wildcards like `gpt-*-codex` and multi-term queries like `claude sonnet` |
-| `provider` | Filter by provider (e.g. `openai`, `anthropic`) |
-| `mode` | Filter by mode (`chat`, `embedding`, `completion`, etc.) |
-| `supports` | Comma-separated capabilities (`vision`, `function_calling`, `reasoning`, `prompt_caching`) |
-| `max_input_cost` | Max input cost per token |
-| `min_context` | Minimum context window (tokens) |
-| `sort` | Sort field (e.g. `input_cost_per_token`, `max_input_tokens`) |
-| `order` | `asc` or `desc` |
-| `limit` | Results per page (default 100) |
-| `offset` | Pagination offset |
+| Param            | Description                                                                                                      |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `q`              | Search model name or provider; supports wildcards like `gpt-*-codex` and multi-term queries like `claude sonnet` |
+| `provider`       | Filter by provider (e.g. `openai`, `anthropic`)                                                                  |
+| `mode`           | Filter by mode (`chat`, `embedding`, `completion`, etc.)                                                         |
+| `supports`       | Comma-separated capabilities (`vision`, `function_calling`, `reasoning`, `prompt_caching`)                       |
+| `max_input_cost` | Max input cost per token                                                                                         |
+| `min_context`    | Minimum context window (tokens)                                                                                  |
+| `sort`           | Sort field (e.g. `input_cost_per_token`, `max_input_tokens`)                                                     |
+| `order`          | `asc` or `desc`                                                                                                  |
+| `limit`          | Results per page (default 100)                                                                                   |
+| `offset`         | Pagination offset                                                                                                |
 
 ### `GET /api/providers`
 
@@ -115,11 +114,11 @@ Export Inspect-compatible model pricing as JSON or YAML.
 
 Query parameters:
 
-| Param | Description |
-| ----- | ----------- |
-| `model` | Inspect model name. Repeat the parameter to request multiple models. |
+| Param    | Description                                                                      |
+| -------- | -------------------------------------------------------------------------------- |
+| `model`  | Inspect model name. Repeat the parameter to request multiple models.             |
 | `models` | Comma-separated Inspect model names. Alternative to repeated `model` parameters. |
-| `format` | `json` or `yaml` (default `json`). Use `yaml` for `--model-cost-config`. |
+| `format` | `json` or `yaml` (default `json`). Use `yaml` for `--model-cost-config`.         |
 
 The response format matches Inspect's `ModelCost` object shape:
 

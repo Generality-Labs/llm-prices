@@ -6,8 +6,8 @@ vi.mock("../src/data", () => ({
   getModels: vi.fn(),
 }));
 
-import { getMeta, getModels } from "../src/data";
 import { applyFilters, handleApiRequest } from "../src/api";
+import { getMeta, getModels } from "../src/data";
 
 const models: ModelEntry[] = [
   {
@@ -82,25 +82,25 @@ describe("handleApiRequest", () => {
   it("returns Inspect costs as YAML", async () => {
     const response = await handleApiRequest(
       new URL(
-        "https://example.com/api/inspect-costs?model=openai/gpt-4o&model=google/gemini-2.5-pro&format=yaml"
+        "https://example.com/api/inspect-costs?model=openai/gpt-4o&model=google/gemini-2.5-pro&format=yaml",
       ),
-      env
+      env,
     );
 
     expect(response).not.toBeNull();
     expect(response?.status).toBe(200);
     expect(response?.headers.get("Content-Type")).toContain("application/yaml");
     await expect(response?.text()).resolves.toBe(
-      '"openai/gpt-4o":\n  input: 2.50\n  output: 10.00\n  input_cache_write: 0.00\n  input_cache_read: 1.25\n"google/gemini-2.5-pro":\n  input: 1.25\n  output: 10.00\n  input_cache_write: 0.00\n  input_cache_read: 0.125\n'
+      '"openai/gpt-4o":\n  input: 2.50\n  output: 10.00\n  input_cache_write: 0.00\n  input_cache_read: 1.25\n"google/gemini-2.5-pro":\n  input: 1.25\n  output: 10.00\n  input_cache_write: 0.00\n  input_cache_read: 0.125\n',
     );
   });
 
   it("resolves dotted anthropic model names and keeps provider-specific matches", async () => {
     const response = await handleApiRequest(
       new URL(
-        "https://example.com/api/inspect-costs?model=anthropic/claude-sonnet-4.5&model=bedrock/claude-sonnet-4.5"
+        "https://example.com/api/inspect-costs?model=anthropic/claude-sonnet-4.5&model=bedrock/claude-sonnet-4.5",
       ),
-      env
+      env,
     );
 
     expect(response).not.toBeNull();
@@ -123,10 +123,8 @@ describe("handleApiRequest", () => {
 
   it("includes matched model metadata when inspect debug output is requested", async () => {
     const response = await handleApiRequest(
-      new URL(
-        "https://example.com/api/inspect-costs?model=anthropic/claude-sonnet-4.5&debug=1"
-      ),
-      env
+      new URL("https://example.com/api/inspect-costs?model=anthropic/claude-sonnet-4.5&debug=1"),
+      env,
     );
 
     expect(response).not.toBeNull();
@@ -147,23 +145,20 @@ describe("handleApiRequest", () => {
   it("includes matched model metadata in YAML when inspect debug output is requested", async () => {
     const response = await handleApiRequest(
       new URL(
-        "https://example.com/api/inspect-costs?model=anthropic/claude-sonnet-4.5&format=yaml&debug=1"
+        "https://example.com/api/inspect-costs?model=anthropic/claude-sonnet-4.5&format=yaml&debug=1",
       ),
-      env
+      env,
     );
 
     expect(response).not.toBeNull();
     expect(response?.status).toBe(200);
     await expect(response?.text()).resolves.toBe(
-      '"anthropic/claude-sonnet-4.5":\n  input: 3.00\n  output: 15.00\n  input_cache_write: 3.75\n  input_cache_read: 0.30\n  _requested_model: "anthropic/claude-sonnet-4.5"\n  _matched_key: "claude-sonnet-4-5"\n  _matched_provider: "anthropic"\n'
+      '"anthropic/claude-sonnet-4.5":\n  input: 3.00\n  output: 15.00\n  input_cache_write: 3.75\n  input_cache_read: 0.30\n  _requested_model: "anthropic/claude-sonnet-4.5"\n  _matched_key: "claude-sonnet-4-5"\n  _matched_provider: "anthropic"\n',
     );
   });
 
   it("returns a 400 when no inspect model names are provided", async () => {
-    const response = await handleApiRequest(
-      new URL("https://example.com/api/inspect-costs"),
-      env
-    );
+    const response = await handleApiRequest(new URL("https://example.com/api/inspect-costs"), env);
 
     expect(response).not.toBeNull();
     expect(response?.status).toBe(400);
@@ -176,7 +171,7 @@ describe("handleApiRequest", () => {
   it("returns unresolved inspect model names with a 400 response", async () => {
     const response = await handleApiRequest(
       new URL("https://example.com/api/inspect-costs?model=azureai/Llama-3.3-70B-Instruct"),
-      env
+      env,
     );
 
     expect(response).not.toBeNull();

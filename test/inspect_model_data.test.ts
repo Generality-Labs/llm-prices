@@ -7,7 +7,7 @@ import type { ModelEntry } from "../src/types";
 function loadBackupModels(): ModelEntry[] {
   const backupPath = path.resolve(
     process.cwd(),
-    "resources/model_prices_and_context_window_backup_2026-03-13.json"
+    "resources/model_prices_and_context_window_backup_2026-03-13.json",
   );
   const parsed = JSON.parse(fs.readFileSync(backupPath, "utf8")) as Record<
     string,

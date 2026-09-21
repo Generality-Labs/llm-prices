@@ -1,11 +1,11 @@
-import { readFileSync } from "fs";
+import { readFileSync } from "node:fs";
 
 // Read .env manually (no dependency needed)
 const env = Object.fromEntries(
   readFileSync(".env", "utf-8")
     .split("\n")
     .filter((l) => l && !l.startsWith("#"))
-    .map((l) => l.split("=").map((s) => s.trim()))
+    .map((l) => l.split("=").map((s) => s.trim())),
 );
 
 const token = env.REFRESH_SECRET;

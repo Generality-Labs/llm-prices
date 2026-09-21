@@ -1,4 +1,4 @@
-import { ModelEntry } from "./types";
+import type { ModelEntry } from "./types";
 
 export interface InspectModelCost {
   input: number;
@@ -43,9 +43,7 @@ function roundCost(value: number): number {
 }
 
 function costPerMillion(value: unknown): number {
-  return typeof value === "number" && Number.isFinite(value)
-    ? roundCost(value * 1_000_000)
-    : 0;
+  return typeof value === "number" && Number.isFinite(value) ? roundCost(value * 1_000_000) : 0;
 }
 
 function splitInspectModelName(modelName: string): {
@@ -112,9 +110,9 @@ function splitModelSegments(modelName: string): string[] {
 }
 
 function preferredProvidersForInspectModel(modelName: string): string[] {
-  const [provider = "", qualifier = "", subqualifier = ""] = splitModelSegments(
-    modelName
-  ).map((segment) => segment.toLowerCase());
+  const [provider = "", qualifier = "", subqualifier = ""] = splitModelSegments(modelName).map(
+    (segment) => segment.toLowerCase(),
+  );
 
   if (provider === "openai" && qualifier === "azure") {
     return ["azure", "openai"];
@@ -312,10 +310,7 @@ function candidateKeysForInspectModel(modelName: string): string[] {
       addCandidate(candidates, compatModel);
       addCandidate(candidates, `${compatProvider}/${compatModel}`);
       if (compatProvider) {
-        addCandidate(
-          candidates,
-          `${providerAlias(compatProvider)}/${compatModel}`
-        );
+        addCandidate(candidates, `${providerAlias(compatProvider)}/${compatModel}`);
       }
       break;
     }
@@ -349,13 +344,8 @@ function candidateKeysForInspectModel(modelName: string): string[] {
  * comparisons. This keeps resolution deterministic while still handling common
  * naming differences between Inspect and LiteLLM.
  */
-function findMatchingModel(
-  models: ModelEntry[],
-  candidates: string[]
-): ModelEntry | null {
-  const exactCandidates = new Set(
-    candidates.map((candidate) => candidate.toLowerCase())
-  );
+function findMatchingModel(models: ModelEntry[], candidates: string[]): ModelEntry | null {
+  const exactCandidates = new Set(candidates.map((candidate) => candidate.toLowerCase()));
 
   for (const model of models) {
     if (exactCandidates.has(model.key.toLowerCase())) {
@@ -364,7 +354,7 @@ function findMatchingModel(
   }
 
   const normalizedCandidates = new Set(
-    candidates.map((candidate) => normalizeForComparison(candidate))
+    candidates.map((candidate) => normalizeForComparison(candidate)),
   );
 
   for (const model of models) {
@@ -384,22 +374,24 @@ function findMatchingModel(
         }
 
         const suffix = normalizedKey.slice(candidate.length + 1);
-        const score: [number, number] =
-          /^(latest|preview|\d{3,}|\d{4}-\d{2}-\d{2}|v\d.*)$/u.test(suffix)
-            ? [0, normalizedKey.length]
-            : [/^\d$/u.test(suffix) ? 2 : 1, normalizedKey.length];
+        const score: [number, number] = /^(latest|preview|\d{3,}|\d{4}-\d{2}-\d{2}|v\d.*)$/u.test(
+          suffix,
+        )
+          ? [0, normalizedKey.length]
+          : [/^\d$/u.test(suffix) ? 2 : 1, normalizedKey.length];
 
-        if (!bestScore || score[0] < bestScore[0] || (score[0] === bestScore[0] && score[1] < bestScore[1])) {
+        if (
+          !bestScore ||
+          score[0] < bestScore[0] ||
+          (score[0] === bestScore[0] && score[1] < bestScore[1])
+        ) {
           bestScore = score;
         }
       }
 
       return bestScore ? { model, score: bestScore } : null;
     })
-    .filter(
-      (value): value is { model: ModelEntry; score: [number, number] } =>
-        value !== null
-    )
+    .filter((value): value is { model: ModelEntry; score: [number, number] } => value !== null)
     .sort((a, b) => a.score[0] - b.score[0] || a.score[1] - b.score[1]);
 
   if (rankedPrefixMatches.length > 0) {
@@ -415,10 +407,7 @@ function findMatchingModel(
  * that provider first so that overlapping model keys across providers do not
  * silently return the wrong entry.
  */
-function findModelByCandidates(
-  models: ModelEntry[],
-  modelName: string
-): ModelEntry | null {
+function findModelByCandidates(models: ModelEntry[], modelName: string): ModelEntry | null {
   const candidates = candidateKeysForInspectModel(modelName);
   const { provider, model } = splitInspectModelName(modelName);
   if (!provider) {
@@ -428,8 +417,7 @@ function findModelByCandidates(
   const preferredProviders = preferredProvidersForInspectModel(modelName);
   const providerModels = models.filter(
     (entry) =>
-      entry.litellm_provider &&
-      preferredProviders.includes(entry.litellm_provider.toLowerCase())
+      entry.litellm_provider && preferredProviders.includes(entry.litellm_provider.toLowerCase()),
   );
   const providerMatch = findMatchingModel(providerModels, candidates);
   if (providerMatch) {
@@ -456,7 +444,7 @@ export function toInspectModelCost(model: ModelEntry): InspectModelCost {
     output: costPerMillion(model.output_cost_per_token),
     input_cache_write: costPerMillion(model.cache_creation_input_token_cost),
     input_cache_read: costPerMillion(
-      model.cache_read_input_token_cost ?? model.input_cost_per_token_cache_hit
+      model.cache_read_input_token_cost ?? model.input_cost_per_token_cache_hit,
     ),
   };
 }
@@ -468,7 +456,7 @@ export function toInspectModelCost(model: ModelEntry): InspectModelCost {
 export function buildInspectCostExport(
   models: ModelEntry[],
   requestedModels: string[],
-  options: InspectExportOptions = {}
+  options: InspectExportOptions = {},
 ): InspectExportResult {
   const costs: Record<string, InspectModelCost> = {};
   const unresolved: InspectResolutionError[] = [];
@@ -508,9 +496,7 @@ export function buildInspectCostExport(
  * writing directly to `--model-cost-config`. A trailing newline is included so
  * shell prompts do not get appended to the last line when using `curl -o`.
  */
-export function renderInspectCostsYaml(
-  costs: Record<string, InspectModelCost>
-): string {
+export function renderInspectCostsYaml(costs: Record<string, InspectModelCost>): string {
   const body = Object.entries(costs)
     .map(([model, cost]) =>
       [
@@ -522,13 +508,11 @@ export function renderInspectCostsYaml(
         ...(cost._requested_model
           ? [`  _requested_model: ${JSON.stringify(cost._requested_model)}`]
           : []),
-        ...(cost._matched_key
-          ? [`  _matched_key: ${JSON.stringify(cost._matched_key)}`]
-          : []),
+        ...(cost._matched_key ? [`  _matched_key: ${JSON.stringify(cost._matched_key)}`] : []),
         ...(cost._matched_provider
           ? [`  _matched_provider: ${JSON.stringify(cost._matched_provider)}`]
           : []),
-      ].join("\n")
+      ].join("\n"),
     )
     .join("\n");
 
