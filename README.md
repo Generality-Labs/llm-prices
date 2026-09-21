@@ -37,12 +37,14 @@ Pull requests and pushes to `main` run type-checking, the unit and worker-runtim
 
 Every push to `main` then deploys production through the shared `worker-deploy` workflow and smoke-tests `GET /health`. Two repository secrets are required:
 
-- `CLOUDFLARE_API_TOKEN` — an account-owned token with **Workers Editor** at the Workers product scope and **Zone > Workers Routes > Write** on `generality.org` (the custom domain).
+- `CLOUDFLARE_API_TOKEN` — an account-owned token with **Workers Editor** at the Workers product scope, plus **Zone > Zone > Read** and **Zone > Workers Routes > Write** on `generality.org` (wrangler resolves the zone for the custom domain on every deploy).
 - `CLOUDFLARE_ACCOUNT_ID` — the Generality Labs account id.
 
 Set the `HEALTH_URL` variable on the `production` GitHub environment to `https://llm-prices.generality.org/health` to enable the post-deploy check.
 
-Cloudflare Workers Builds is no longer used. If a Builds connection still exists on the Worker (**Settings > Builds**), disconnect it so a push does not deploy twice.
+**Template pin.** `.copier-answers.yml`'s `_commit` records the template revision this repo was adopted from; after the template's `v1.1.0` release it must point at that tag.
+
+Cloudflare Workers Builds is no longer used. Disconnect the Builds connection on the `llm-prices` Worker (**Settings > Builds**) before merging a change that introduces the named environments: Builds runs a bare `npx wrangler deploy`, which now resolves the local-only top-level config and would create a stray `llm-prices-dev` Worker instead of deploying production.
 
 ### Compatibility with existing clients
 
@@ -75,6 +77,10 @@ npm run refresh
 `npm run refresh` reads the same `.dev.vars.production` file (falling back to the older `.env` location) and sends the secret in an Authorization header to `https://llm-prices.generality.org/api/refresh`.
 
 ## API
+
+### `GET /health`
+
+Returns `{"status":"ok"}`. Used by the post-deploy smoke test.
 
 ### `GET /api/models`
 
