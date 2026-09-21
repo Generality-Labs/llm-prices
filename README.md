@@ -40,6 +40,10 @@ For deployment with an API token, use a token with Workers Scripts edit and Work
 
 The custom domain configuration lets Cloudflare create the DNS record and TLS certificate during deployment. The `workers.dev` hostname and preview URLs are disabled for this deployment.
 
+### Compatibility with existing clients
+
+Keep the personal-account Worker at `https://llm-prices.llm-prices.workers.dev` running with its KV namespace and six-hour refresh schedule until existing clients have migrated. Older installations of [Inspect Costs Plugin](https://github.com/jasongwartz/inspect_costs_plugin) use that endpoint, and their HTTP client does not follow redirects. The old endpoint must continue returning pricing responses directly. Merging the plugin's URL update alone does not update existing installations.
+
 ### Manual deployment
 
 Authenticate with the Generality Labs Cloudflare account using `npx wrangler login`, or set `CLOUDFLARE_API_TOKEN` in your shell. Then deploy:
