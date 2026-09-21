@@ -15,7 +15,7 @@ const env = Object.fromEntries(
 
 const token = env.REFRESH_SECRET;
 if (!token) {
-  console.error("REFRESH_SECRET not found in .env");
+  console.error(`REFRESH_SECRET not found in ${envFile}`);
   process.exit(1);
 }
 
