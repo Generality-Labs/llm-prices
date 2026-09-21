@@ -34,7 +34,15 @@ The repository is hosted at [Generality-Labs/llm-prices](https://github.com/Gene
 
 ### GitHub Actions
 
-Pull requests and pushes to `main` run the tests, TypeScript checks, and a deployment dry run. Deployment is manual.
+Pull requests and pushes to `main` run the tests, TypeScript checks, and a deployment dry run.
+
+### Automatic deployment
+
+Cloudflare [Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/) provides automatic deployment from GitHub separately from the GitHub Actions checks. To configure it, open the Generality Labs `llm-prices` Worker in Cloudflare, select **Settings > Builds > Connect**, and connect `Generality-Labs/llm-prices` with production branch `main`, root directory `/`, and deploy command `npx wrangler deploy`.
+
+When moving between Cloudflare accounts, reconnect Workers Builds for the destination Worker. Ensure the production branch contains the destination account and KV namespace before its first build. Disconnect the source Worker's build connection while keeping the legacy service running as described below.
+
+### Deployment credentials and domain
 
 For deployment with an API token, use a token with Workers Scripts edit and Workers KV Storage edit permissions on the Generality Labs account, plus Zone read and Workers Routes edit permissions on `generality.org`.
 
