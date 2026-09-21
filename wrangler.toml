@@ -3,8 +3,11 @@
 # [env.production] below, so a bare `wrangler deploy` (no --env) can never
 # overwrite production — it would create a separate llm-prices-dev Worker.
 #
-# Bindings ([[kv_namespaces]], [triggers], [[routes]]) are NOT inherited by
-# named environments, so production repeats them with the real ids.
+# Bindings such as [[kv_namespaces]] are NOT inherited by named environments,
+# so production repeats them with the real ids. [[routes]] and [triggers] ARE
+# inherited; the route is declared only under production so a dev deploy can
+# never take the public hostname, and the cron is repeated there so the
+# production schedule does not depend on the local-only top-level block.
 name = "llm-prices-dev"
 account_id = "4dd4a6b03a79f452ebc112658643f02a"
 main = "src/index.ts"
@@ -36,8 +39,9 @@ fallthrough = false
 binding = "MODEL_PRICES"
 id = "00000000000000000000000000000000"
 
-# Local only. Exercise the scheduled handler with
-# `npx wrangler dev --test-scheduled`, then:
+# Local only — production defines its own [triggers] below, which takes
+# precedence over this block despite triggers being inheritable. Exercise the
+# scheduled handler with `npx wrangler dev --test-scheduled`, then:
 #   curl "http://localhost:8787/__scheduled?cron=0+*/6+*+*+*"
 [triggers]
 crons = ["0 */6 * * *"]
