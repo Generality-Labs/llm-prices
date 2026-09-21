@@ -1,0 +1,72 @@
+# Python version for hook environments (the check-* hooks and zizmor are
+# Python-based even though the project is TypeScript).
+default_language_version:
+  python: python3.12
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # v6.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-json
+        # tsconfig.json is JSONC: TypeScript has always allowed comments there,
+        # and Biome parses it as such. check-json uses the stdlib json module,
+        # which does not, so it fails on a commented tsconfig.
+        exclude: ^tsconfig.*\.json$
+      - id: check-yaml
+      - id: detect-private-key
+      - id: end-of-file-fixer
+
+  - repo: https://github.com/rhysd/actionlint
+    rev: 914e7df21a07ef503a81201c76d2b11c789d3fca # v1.7.12
+    hooks:
+      - id: actionlint # GitHub Actions correctness (complements zizmor's security audits)
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: 745eface02aef23e168a8afb6b5737818efbea95 # v0.11.0.1
+    hooks:
+      - id: shellcheck # lints shell scripts (e.g. .claude/hooks/session-start.sh)
+        # Pinned independently of default_language_version above, and it must
+        # stay below 3.13 when that default moves up. shellcheck-py ships no
+        # wheel in its git repo, so pre-commit builds it from source, and that
+        # build downloads the binary with a bare urllib.request.urlopen. Python
+        # 3.13 turns on ssl.VERIFY_X509_STRICT by default, which rejects a CA
+        # certificate carrying no keyUsage extension -- as the MITM proxies in
+        # front of some sandboxes do. The hook environment then can't be built
+        # at all, so `git commit` fails there, not merely `pre-commit run`.
+        language_version: python3.12
+
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: e3eebf65325ccc992422292cb7a4baee967cf815 # v1.26.1
+    hooks:
+      # Several of zizmor's audits need the GitHub API, which isn't reliably
+      # available everywhere this runs (sandboxes, restricted networks). Split
+      # into two hooks so local runs always get zizmor's offline coverage,
+      # while CI - which has real network + a real GH_TOKEN - additionally
+      # runs the online-only audits via `--hook-stage manual`.
+      # `--persona=auditor` is zizmor's most thorough mode; findings at any
+      # severity fail the run.
+      - id: zizmor
+        name: zizmor (offline checks)
+        args: [--no-online-audits, --persona=auditor]
+      - id: zizmor
+        name: zizmor (online checks - GitHub API, CI only)
+        args: [--persona=auditor]
+        stages: [manual]
+
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 82912cdaea4fb830f751504486a7879c70526547 # 1.0.0
+    hooks:
+      - id: mdformat
+        # Formatting config (wrap, number, ...) lives in .mdformat.toml.
+        additional_dependencies:
+          - mdformat-gfm # padded/aligned tables + GFM extensions (task lists, strikethrough)
+
+  - repo: https://github.com/biomejs/pre-commit
+    rev: f6d5e1fa73430779cef768d00c512fa86162fe6e # v2.5.5
+    hooks:
+      # Biome is one Rust binary doing both lint and format, one config file,
+      # no plugin ecosystem to keep in sync. `check` runs both. Rules and
+      # formatting live in biome.json.
+      - id: biome-check
+        additional_dependencies: ["@biomejs/biome@2.5.5"]

@@ -1,0 +1,29 @@
+name: Template Update
+
+# Pulls scaffolded-file changes from the template via `copier update`, opening
+# a PR only when something actually changed. Changes to the shared reusable
+# workflows need no run here — those are pinned `@v1` and propagate on their
+# own when the tag moves.
+#
+# To update to something other than `v1`, run `uvx copier update` locally with
+# `--vcs-ref`.
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays, 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  template-update:
+    uses: Generality-Labs/cloudflare-worker-template/.github/workflows/template-update.yml@v1
+    permissions:
+      contents: write # push the branch holding the template update
+      pull-requests: write # open the PR for it
+    with:
+      # Set true, and pass the secret below, to have Claude attempt the merge
+      # conflicts copier can't resolve on its own.
+      resolve-conflicts-with-claude: false
+    # secrets:
+    #   anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}

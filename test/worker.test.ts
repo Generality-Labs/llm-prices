@@ -18,3 +18,18 @@ describe("GET /health", () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe("KV binding", () => {
+  it("round-trips a value", async () => {
+    await env.MODEL_PRICES.put("smoke-test-key", "hello");
+    expect(await env.MODEL_PRICES.get("smoke-test-key")).toBe("hello");
+  });
+});
+
+describe("static assets", () => {
+  it("serves public/index.html through the ASSETS binding", async () => {
+    const res = await env.ASSETS.fetch(new Request("https://example.com/index.html"));
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain("<html");
+  });
+});

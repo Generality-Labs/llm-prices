@@ -1,0 +1,15 @@
+# Template for this Worker's secrets. Real values are never committed — every
+# copy destination below is gitignored.
+#
+#   Local dev:  cp .dev.vars.example .dev.vars       # read by `wrangler dev` + vitest
+#   Deploys:    cp .dev.vars.example .dev.vars.production  (and .dev.vars.staging),
+#               fill in that environment's values, then push them with
+#               scripts/put-secrets.sh <env>  (npm run secrets / secrets:staging)
+#
+# Declare one KEY= line per secret. A line ending in "# optional" is pushed
+# only when non-empty; every other declared secret is validated before
+# anything is pushed. Non-secret per-environment config belongs in
+# wrangler.toml [vars], not here.
+#
+# Bearer token for POST /api/refresh (npm run refresh). Also set as a Worker secret.
+REFRESH_SECRET=

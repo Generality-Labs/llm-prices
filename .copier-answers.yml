@@ -1,0 +1,20 @@
+# This file is auto-generated and updated by Copier; do not edit by hand.
+# Run `copier update` to pull in template changes.
+_commit: 66d7e15ec10582c014f6ee91ff0657ea936bfed9
+_src_path: gh:Generality-Labs/cloudflare-worker-template
+author_name: Generality Labs
+github_owner: Generality-Labs
+license: MIT
+node_version: '22'
+project_description: Cloudflare Worker serving LLM pricing data (REST API, MCP server,
+    web UI)
+project_name: llm-prices
+use_assets: true
+use_cron: true
+use_d1: false
+use_kv: true
+use_playwright: false
+use_r2: false
+use_staging: false
+use_template_update: true
+use_typos: false

@@ -1,31 +1,22 @@
 name: CI
 
 on:
-  pull_request:
   push:
-    branches: [main]
-  workflow_dispatch:
+    branches:
+      - main
+  pull_request:
 
 permissions:
   contents: read
 
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.4.0
-        with:
-          node-version: "22"
-          cache: npm
-
-      - run: npm ci
-      - run: npm test
-      - run: npx tsc --noEmit
-      - name: Validate Worker bundle (no deployment)
-        run: npx wrangler deploy --dry-run
+  ci:
+    # Moving major tag on purpose (see .github/zizmor.yml): we own this repo,
+    # so CI fixes flow in without a bump PR per template release. Dependabot
+    # is told to leave it alone in .github/dependabot.yml — don't "helpfully"
+    # pin this to an exact version, or copier update will just revert it.
+    # TEMPORARY: pinned to the template branch until v1.1.0 is released, which
+    # adds the bundle dry run this repo relied on. Then switch to @v1.
+    uses: Generality-Labs/cloudflare-worker-template/.github/workflows/worker-ci.yml@feat/adoption-hardening
+    with:
+      node-version: "22"
