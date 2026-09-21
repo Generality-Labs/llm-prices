@@ -12,7 +12,7 @@ Data is refreshed automatically every 6 hours via cron trigger. Zero ongoing cos
 Production deployment:
 
 ```text
-https://llm-prices.llm-prices.workers.dev/
+https://llm-prices.generality.org/
 ```
 
 ## Quick Start
@@ -30,38 +30,54 @@ Trigger a data refresh by calling the scheduled handler (wrangler dev supports t
 
 ## Deploy
 
-### 1. Create KV Namespace
+The repository is hosted at [Generality-Labs/llm-prices](https://github.com/Generality-Labs/llm-prices). The Worker and its `MODEL_PRICES` KV namespace are hosted in the Generality Labs Cloudflare account. `wrangler.toml` specifies the account, namespace, custom domain, and six-hour refresh schedule.
+
+### GitHub Actions
+
+Pull requests and pushes to `main` run the tests, TypeScript checks, and Worker bundle validation using `wrangler deploy --dry-run`. This validation does not publish a deployment.
+
+### Automatic deployment
+
+Cloudflare [Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/) provides automatic deployment from GitHub separately from the GitHub Actions checks. To configure it, open the Generality Labs `llm-prices` Worker in Cloudflare, select **Settings > Builds > Connect**, and connect `Generality-Labs/llm-prices` with production branch `main`, root directory `/`, and deploy command `npx wrangler deploy`.
+
+When moving between Cloudflare accounts, reconnect Workers Builds for the destination Worker. Ensure the production branch contains the destination account and KV namespace before its first build. Disconnect the source Worker's build connection while keeping the legacy service running as described below.
+
+### Deployment credentials and domain
+
+For deployment with an API token, use a token with Workers Scripts edit and Workers KV Storage edit permissions on the Generality Labs account, plus Zone read and Workers Routes edit permissions on `generality.org`.
+
+The custom domain configuration lets Cloudflare create the DNS record and TLS certificate during deployment. The `workers.dev` hostname and preview URLs are disabled for this deployment.
+
+### Compatibility with existing clients
+
+Keep the personal-account Worker at `https://llm-prices.llm-prices.workers.dev` running with its KV namespace and six-hour refresh schedule until existing clients have migrated. Older installations of [Inspect Costs Plugin](https://github.com/jasongwartz/inspect_costs_plugin) use that endpoint, and their HTTP client does not follow redirects. The old endpoint must continue returning pricing responses directly. Merging the plugin's URL update alone does not update existing installations.
+
+### Manual deployment
+
+Authenticate with the Generality Labs Cloudflare account using `npx wrangler login`, or set `CLOUDFLARE_API_TOKEN` in your shell. Then deploy:
 
 ```bash
-npx wrangler kv namespace create MODEL_PRICES
-```
-
-Copy the outputted ID and replace `PLACEHOLDER_KV_ID` in `wrangler.toml`.
-
-For local dev, also create a preview namespace:
-
-```bash
-npx wrangler kv namespace create MODEL_PRICES --preview
-```
-
-Add the preview ID to `wrangler.toml`:
-
-```toml
-[[kv_namespaces]]
-binding = "MODEL_PRICES"
-id = "YOUR_PRODUCTION_ID"
-preview_id = "YOUR_PREVIEW_ID"
-```
-
-### 2. Deploy
-
-```bash
+npm ci
+npm test
+npx tsc --noEmit
 npm run deploy
 ```
 
-### 3. Seed Initial Data
+### Refresh pricing data
 
-After deploying, trigger the cron manually from the Cloudflare dashboard (Workers → your worker → Triggers → Cron → Trigger Now), or wait up to 6 hours for the first automatic refresh.
+The Worker refreshes pricing automatically every six hours. To populate a new deployment immediately, set a `REFRESH_SECRET` with `npx wrangler secret put REFRESH_SECRET`, and store the same value in the local, gitignored `.env` file:
+
+```dotenv
+REFRESH_SECRET=your-refresh-secret
+```
+
+Then run:
+
+```bash
+npm run refresh
+```
+
+The refresh script sends the secret in an Authorization header to `https://llm-prices.generality.org/api/refresh`.
 
 ## API
 
@@ -118,7 +134,7 @@ All values are returned in dollars per million tokens.
 Examples:
 
 ```bash
-curl "https://llm-prices.llm-prices.workers.dev/api/inspect-costs?model=openai/gpt-4o&model=anthropic/claude-sonnet-4-5&format=yaml" -o pricing.yaml
+curl "https://llm-prices.generality.org/api/inspect-costs?model=openai/gpt-4o&model=anthropic/claude-sonnet-4-5&format=yaml" -o pricing.yaml
 ```
 
 ```bash
@@ -126,33 +142,33 @@ inspect eval ctf.py --model-cost-config pricing.yaml --cost-limit 2.00
 ```
 
 ```bash
-curl "https://llm-prices.llm-prices.workers.dev/api/inspect-costs?models=openai/gpt-4o,google/gemini-2.5-pro,openrouter/gryphe/mythomax-l2-13b&format=json" -o pricing.json
+curl "https://llm-prices.generality.org/api/inspect-costs?models=openai/gpt-4o,google/gemini-2.5-pro,openrouter/gryphe/mythomax-l2-13b&format=json" -o pricing.json
 ```
 
 If you want a Claude, GPT, or Gemini model but are not sure which exact model key to use, search the catalog first and pick the model yourself. You can also add `sort` (for example `sort=key&order=desc` or `sort=input_cost_per_token&order=asc`) to make the list easier to scan:
 
 ```bash
-curl "https://llm-prices.llm-prices.workers.dev/api/models?provider=anthropic&q=claude&sort=key&order=desc"
+curl "https://llm-prices.generality.org/api/models?provider=anthropic&q=claude&sort=key&order=desc"
 ```
 
 ```bash
-curl "https://llm-prices.llm-prices.workers.dev/api/models?provider=openai&q=gpt&sort=key&order=desc"
+curl "https://llm-prices.generality.org/api/models?provider=openai&q=gpt&sort=key&order=desc"
 ```
 
 ```bash
-curl "https://llm-prices.llm-prices.workers.dev/api/models?provider=gemini&q=gemini&sort=key&order=desc"
+curl "https://llm-prices.generality.org/api/models?provider=gemini&q=gemini&sort=key&order=desc"
 ```
 
 Then request Inspect-formatted pricing for the exact model you selected:
 
 ```bash
-curl "https://llm-prices.llm-prices.workers.dev/api/inspect-costs?model=anthropic/claude-sonnet-4-5&format=yaml" -o pricing.yaml
+curl "https://llm-prices.generality.org/api/inspect-costs?model=anthropic/claude-sonnet-4-5&format=yaml" -o pricing.yaml
 ```
 
 If you want to confirm which cached dataset key was matched, add `debug=1`:
 
 ```bash
-curl "https://llm-prices.llm-prices.workers.dev/api/inspect-costs?model=anthropic/claude-sonnet-4-5&format=yaml&debug=1" -o pricing-debug.yaml
+curl "https://llm-prices.generality.org/api/inspect-costs?model=anthropic/claude-sonnet-4-5&format=yaml&debug=1" -o pricing-debug.yaml
 ```
 
 Provider naming notes:
@@ -188,7 +204,7 @@ Available tools:
 For clients that support remote MCP directly, use:
 
 ```text
-https://llm-prices.llm-prices.workers.dev/mcp
+https://llm-prices.generality.org/mcp
 ```
 
 For clients that only support local stdio MCP, bridge with `mcp-remote`:
@@ -200,7 +216,7 @@ For clients that only support local stdio MCP, bridge with `mcp-remote`:
       "command": "npx",
       "args": [
         "mcp-remote",
-        "https://llm-prices.llm-prices.workers.dev/mcp"
+        "https://llm-prices.generality.org/mcp"
       ]
     }
   }
