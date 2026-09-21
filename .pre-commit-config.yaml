@@ -64,6 +64,12 @@ repos:
         # Formatting config (wrap, number, ...) lives in .mdformat.toml.
         additional_dependencies:
           - mdformat-gfm # padded/aligned tables + GFM extensions (task lists, strikethrough)
+        # src/llms.md is a runtime template (imported by src/llms-txt.ts and
+        # served as llms.txt), not prose: its `{{BASE}}` placeholders sit
+        # inside markdown link destinations, and mdformat's CommonMark link
+        # normalization percent-encodes the braces, breaking the runtime
+        # `.replace(/\{\{BASE\}\}/g, ...)` substitution.
+        exclude: ^src/llms\.md$
 
   - repo: https://github.com/biomejs/pre-commit
     rev: f6d5e1fa73430779cef768d00c512fa86162fe6e # v2.5.5
