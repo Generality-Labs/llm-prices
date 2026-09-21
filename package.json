@@ -8,8 +8,8 @@
     "typecheck": "wrangler types --include-runtime=false && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "deploy": "wrangler deploy",
-    "tail": "wrangler tail",
+    "deploy": "wrangler deploy --env production",
+    "tail": "wrangler tail --env production",
     "refresh": "node scripts/refresh.mjs"
   },
   "devDependencies": {

@@ -57,11 +57,10 @@ Keep the personal-account Worker at `https://llm-prices.llm-prices.workers.dev` 
 Authenticate with the Generality Labs Cloudflare account using `npx wrangler login`, or set `CLOUDFLARE_API_TOKEN` in your shell. Then deploy:
 
 ```bash
-npm ci
-npm test
-npx tsc --noEmit
-npm run deploy
+npm ci && npm run typecheck && npm test && npm run deploy
 ```
+
+`npm run deploy` runs `wrangler deploy --env production`, the named environment in `wrangler.toml` that carries the real KV namespace, route, and cron trigger. A bare `wrangler deploy` (no `--env`) reads the top-level, local-only configuration instead and would create a separate `llm-prices-dev` Worker rather than touching production.
 
 ### Refresh pricing data
 
