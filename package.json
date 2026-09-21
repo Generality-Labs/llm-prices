@@ -10,7 +10,8 @@
     "test:watch": "vitest",
     "deploy": "wrangler deploy --env production",
     "tail": "wrangler tail --env production",
-    "refresh": "node scripts/refresh.mjs"
+    "refresh": "node scripts/refresh.mjs",
+    "secrets": "bash scripts/put-secrets.sh production"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.20.1",

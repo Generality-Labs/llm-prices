@@ -9,3 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Initial project scaffold.
+- `GET /health`; worker-runtime tests; Biome, pre-commit, Dependabot.
+
+### Changed
+
+- Adopted `cloudflare-worker-template`: production is a named wrangler environment, CI and deploys use the shared reusable workflows, deploys moved from Cloudflare Workers Builds to GitHub Actions.
