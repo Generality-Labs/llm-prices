@@ -2,9 +2,9 @@
 # copy destination below is gitignored.
 #
 #   Local dev:  cp .dev.vars.example .dev.vars       # read by `wrangler dev` + vitest
-#   Deploys:    cp .dev.vars.example .dev.vars.production  (and .dev.vars.staging),
+#   Deploys:    cp .dev.vars.example .dev.vars.production,
 #               fill in that environment's values, then push them with
-#               scripts/put-secrets.sh <env>  (npm run secrets / secrets:staging)
+#               scripts/put-secrets.sh <env>  (npm run secrets)
 #
 # Declare one KEY= line per secret. A line ending in "# optional" is pushed
 # only when non-empty; every other declared secret is validated before
