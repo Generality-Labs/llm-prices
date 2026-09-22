@@ -19,4 +19,4 @@ jobs:
     # adds the bundle dry run this repo relied on. Then switch to @v1.
     uses: Generality-Labs/cloudflare-worker-template/.github/workflows/worker-ci.yml@feat/adoption-hardening
     with:
-      node-version: "22"
+      node-version: "26"

@@ -13,3 +13,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - Adopted `cloudflare-worker-template`: production is a named wrangler environment, CI and deploys use the shared reusable workflows, deploys moved from Cloudflare Workers Builds to GitHub Actions.
+- Toolchain requires Node 26+ (`.nvmrc`, `engines`, `engine-strict`), matching the template.

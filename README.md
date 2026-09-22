@@ -17,6 +17,8 @@ https://llm-prices.generality.org/
 
 ## Quick Start
 
+Requires Node 26 or later for the toolchain (`nvm use` reads `.nvmrc`); `npm install` refuses older versions. The Worker itself runs on workerd.
+
 ```bash
 # Install dependencies
 npm install
