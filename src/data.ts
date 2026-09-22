@@ -1,4 +1,4 @@
-import { ModelEntry, Env } from "./types";
+import type { Env, ModelEntry } from "./types";
 
 const SOURCE_URL =
   "https://raw.githubusercontent.com/BerriAI/litellm/main/litellm/model_prices_and_context_window_backup.json";
@@ -13,10 +13,7 @@ export async function fetchAndCache(env: Env): Promise<{ count: number }> {
   }
   const raw = await resp.text();
   await env.MODEL_PRICES.put(KV_KEY, raw);
-  await env.MODEL_PRICES.put(
-    KV_META_KEY,
-    JSON.stringify({ updated_at: new Date().toISOString() })
-  );
+  await env.MODEL_PRICES.put(KV_META_KEY, JSON.stringify({ updated_at: new Date().toISOString() }));
 
   const parsed = JSON.parse(raw);
   const count = Object.keys(parsed).filter((k) => k !== "sample_spec").length;
@@ -38,9 +35,7 @@ export async function getModels(env: Env): Promise<ModelEntry[]> {
   return entries;
 }
 
-export async function getMeta(
-  env: Env
-): Promise<{ updated_at: string } | null> {
+export async function getMeta(env: Env): Promise<{ updated_at: string } | null> {
   const raw = await env.MODEL_PRICES.get(KV_META_KEY);
   if (!raw) return null;
   return JSON.parse(raw);

@@ -2,15 +2,25 @@
   "name": "llm-prices",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=26"
+  },
+  "license": "MIT",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
+    "typecheck": "wrangler types --include-runtime=false && tsc --noEmit",
     "test": "vitest run",
-    "tail": "wrangler tail",
-    "refresh": "node scripts/refresh.mjs"
+    "test:watch": "vitest",
+    "deploy": "wrangler deploy --env production",
+    "tail": "wrangler tail --env production",
+    "refresh": "node scripts/refresh.mjs",
+    "secrets": "bash scripts/put-secrets.sh production"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20241230.0",
+    "@cloudflare/vitest-pool-workers": "^0.20.1",
+    "@cloudflare/workers-types": "^5.20260722.0",
+    "@types/node": "^22.15.17",
     "typescript": "^5.7.0",
     "vitest": "^4.1.0",
     "wrangler": "^4.72.0"

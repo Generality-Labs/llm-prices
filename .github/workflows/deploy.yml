@@ -1,0 +1,35 @@
+name: Deploy
+
+# Every push to main deploys production. The job smoke-tests the Worker
+# afterwards when a HEALTH_URL variable is set on the `production` GitHub
+# environment.
+#
+# Requires two repository secrets (see README.md):
+#   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
+# and, only when HEALTH_URL sits behind Cloudflare Access, the optional
+#   ACCESS_CLIENT_ID, ACCESS_CLIENT_SECRET  (an Access service token)
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false # never abandon a half-done deploy
+
+jobs:
+  production:
+    uses: Generality-Labs/cloudflare-worker-template/.github/workflows/worker-deploy.yml@v1
+    with:
+      environment: production
+      deploy-script: deploy
+      node-version: "26"
+    secrets:
+      cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      access-client-id: ${{ secrets.ACCESS_CLIENT_ID }}
+      access-client-secret: ${{ secrets.ACCESS_CLIENT_SECRET }}

@@ -17,6 +17,8 @@ https://llm-prices.generality.org/
 
 ## Quick Start
 
+Requires Node 26 or later for the toolchain (`nvm use` reads `.nvmrc`); `npm install` refuses older versions. The Worker itself runs on workerd.
+
 ```bash
 # Install dependencies
 npm install
@@ -25,28 +27,26 @@ npm install
 npm run dev
 ```
 
-On first run, visit `http://localhost:8787` — the table will be empty until data is loaded.
-Trigger a data refresh by calling the scheduled handler (wrangler dev supports this via the dashboard).
+On first run, visit `http://localhost:8787` — the table will be empty until data is loaded. Trigger a data refresh by calling the scheduled handler (wrangler dev supports this via the dashboard).
 
 ## Deploy
 
-The repository is hosted at [Generality-Labs/llm-prices](https://github.com/Generality-Labs/llm-prices). The Worker and its `MODEL_PRICES` KV namespace are hosted in the Generality Labs Cloudflare account. `wrangler.toml` specifies the account, namespace, custom domain, and six-hour refresh schedule.
+The repository is [Generality-Labs/llm-prices](https://github.com/Generality-Labs/llm-prices). The Worker and its `MODEL_PRICES` KV namespace live in the Generality Labs Cloudflare account; `wrangler.toml` declares the production environment (account, namespace id, custom domain, six-hour refresh schedule). The top level of `wrangler.toml` is local development and tests only.
 
-### GitHub Actions
+### CI and deployment
 
-Pull requests and pushes to `main` run the tests, TypeScript checks, and Worker bundle validation using `wrangler deploy --dry-run`. This validation does not publish a deployment.
+Pull requests and pushes to `main` run type-checking, the unit and worker-runtime tests, a `wrangler deploy --dry-run` bundle check, and the pre-commit stack (Biome, zizmor, actionlint, mdformat) through the shared [`worker-ci`](https://github.com/Generality-Labs/cloudflare-worker-template) workflow.
 
-### Automatic deployment
+Every push to `main` then deploys production through the shared `worker-deploy` workflow and smoke-tests `GET /health`. Two repository secrets are required:
 
-Cloudflare [Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/) provides automatic deployment from GitHub separately from the GitHub Actions checks. To configure it, open the Generality Labs `llm-prices` Worker in Cloudflare, select **Settings > Builds > Connect**, and connect `Generality-Labs/llm-prices` with production branch `main`, root directory `/`, and deploy command `npx wrangler deploy`.
+- `CLOUDFLARE_API_TOKEN` — an account-owned token with **Workers Editor** at the Workers product scope, plus **Zone > Zone > Read** and **Zone > Workers Routes > Write** on `generality.org` (wrangler resolves the zone for the custom domain on every deploy).
+- `CLOUDFLARE_ACCOUNT_ID` — the Generality Labs account id.
 
-When moving between Cloudflare accounts, reconnect Workers Builds for the destination Worker. Ensure the production branch contains the destination account and KV namespace before its first build. Disconnect the source Worker's build connection while keeping the legacy service running as described below.
+Set the `HEALTH_URL` variable on the `production` GitHub environment to `https://llm-prices.generality.org/health` to enable the post-deploy check.
 
-### Deployment credentials and domain
+**Template pin.** `.copier-answers.yml`'s `_commit` records the release tag of the template this repo is aligned with (currently `v1.1.0`); running `uvx copier update` moves it forward.
 
-For deployment with an API token, use a token with Workers Scripts edit and Workers KV Storage edit permissions on the Generality Labs account, plus Zone read and Workers Routes edit permissions on `generality.org`.
-
-The custom domain configuration lets Cloudflare create the DNS record and TLS certificate during deployment. The `workers.dev` hostname and preview URLs are disabled for this deployment.
+Cloudflare Workers Builds is no longer used. Disconnect the Builds connection on the `llm-prices` Worker (**Settings > Builds**) before merging a change that introduces the named environments: Builds runs a bare `npx wrangler deploy`, which now resolves the local-only top-level config and would create a stray `llm-prices-dev` Worker instead of deploying production.
 
 ### Compatibility with existing clients
 
@@ -54,18 +54,17 @@ Keep the personal-account Worker at `https://llm-prices.llm-prices.workers.dev` 
 
 ### Manual deployment
 
-Authenticate with the Generality Labs Cloudflare account using `npx wrangler login`, or set `CLOUDFLARE_API_TOKEN` in your shell. Then deploy:
+Authenticate with the Generality Labs Cloudflare account using `npx wrangler login`, or set `CLOUDFLARE_API_TOKEN` in your shell. Push the Worker's secrets with `npm run secrets` from a gitignored `.dev.vars.production` containing `REFRESH_SECRET=...` (see `.dev.vars.example`), then deploy:
 
 ```bash
-npm ci
-npm test
-npx tsc --noEmit
-npm run deploy
+npm ci && npm run typecheck && npm test && npm run deploy
 ```
+
+`npm run deploy` runs `wrangler deploy --env production`, the named environment in `wrangler.toml` that carries the real KV namespace, route, and cron trigger. A bare `wrangler deploy` (no `--env`) reads the top-level, local-only configuration instead and would create a separate `llm-prices-dev` Worker rather than touching production.
 
 ### Refresh pricing data
 
-The Worker refreshes pricing automatically every six hours. To populate a new deployment immediately, set a `REFRESH_SECRET` with `npx wrangler secret put REFRESH_SECRET`, and store the same value in the local, gitignored `.env` file:
+The Worker refreshes pricing automatically every six hours. To populate a new deployment immediately, push the secret with `npm run secrets`, which reads a gitignored `.dev.vars.production` file containing:
 
 ```dotenv
 REFRESH_SECRET=your-refresh-secret
@@ -77,26 +76,30 @@ Then run:
 npm run refresh
 ```
 
-The refresh script sends the secret in an Authorization header to `https://llm-prices.generality.org/api/refresh`.
+`npm run refresh` reads the same `.dev.vars.production` file (falling back to the older `.env` location) and sends the secret in an Authorization header to `https://llm-prices.generality.org/api/refresh`.
 
 ## API
+
+### `GET /health`
+
+Returns `{"status":"ok"}`. Used by the post-deploy smoke test.
 
 ### `GET /api/models`
 
 Query parameters:
 
-| Param | Description |
-| ----- | ----------- |
-| `q` | Search model name or provider; supports wildcards like `gpt-*-codex` and multi-term queries like `claude sonnet` |
-| `provider` | Filter by provider (e.g. `openai`, `anthropic`) |
-| `mode` | Filter by mode (`chat`, `embedding`, `completion`, etc.) |
-| `supports` | Comma-separated capabilities (`vision`, `function_calling`, `reasoning`, `prompt_caching`) |
-| `max_input_cost` | Max input cost per token |
-| `min_context` | Minimum context window (tokens) |
-| `sort` | Sort field (e.g. `input_cost_per_token`, `max_input_tokens`) |
-| `order` | `asc` or `desc` |
-| `limit` | Results per page (default 100) |
-| `offset` | Pagination offset |
+| Param            | Description                                                                                                      |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `q`              | Search model name or provider; supports wildcards like `gpt-*-codex` and multi-term queries like `claude sonnet` |
+| `provider`       | Filter by provider (e.g. `openai`, `anthropic`)                                                                  |
+| `mode`           | Filter by mode (`chat`, `embedding`, `completion`, etc.)                                                         |
+| `supports`       | Comma-separated capabilities (`vision`, `function_calling`, `reasoning`, `prompt_caching`)                       |
+| `max_input_cost` | Max input cost per token                                                                                         |
+| `min_context`    | Minimum context window (tokens)                                                                                  |
+| `sort`           | Sort field (e.g. `input_cost_per_token`, `max_input_tokens`)                                                     |
+| `order`          | `asc` or `desc`                                                                                                  |
+| `limit`          | Results per page (default 100)                                                                                   |
+| `offset`         | Pagination offset                                                                                                |
 
 ### `GET /api/providers`
 
@@ -116,11 +119,11 @@ Export Inspect-compatible model pricing as JSON or YAML.
 
 Query parameters:
 
-| Param | Description |
-| ----- | ----------- |
-| `model` | Inspect model name. Repeat the parameter to request multiple models. |
+| Param    | Description                                                                      |
+| -------- | -------------------------------------------------------------------------------- |
+| `model`  | Inspect model name. Repeat the parameter to request multiple models.             |
 | `models` | Comma-separated Inspect model names. Alternative to repeated `model` parameters. |
-| `format` | `json` or `yaml` (default `json`). Use `yaml` for `--model-cost-config`. |
+| `format` | `json` or `yaml` (default `json`). Use `yaml` for `--model-cost-config`.         |
 
 The response format matches Inspect's `ModelCost` object shape:
 

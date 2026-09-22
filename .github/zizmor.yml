@@ -1,0 +1,9 @@
+# Allow tag/branch refs for our own reusable workflows and actions (we control
+# those repos and pin them to a moving major tag on purpose); still require full
+# commit-SHA pins for third-party actions.
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        "Generality-Labs/*": ref-pin
+        "*": hash-pin

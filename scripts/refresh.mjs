@@ -1,16 +1,24 @@
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "node:fs";
 
-// Read .env manually (no dependency needed)
+// Same file scripts/put-secrets.sh pushes to the Worker; .env is the older location.
+const envFile = [".dev.vars.production", ".env"].find((f) => existsSync(f));
+if (!envFile) {
+  console.error("No .dev.vars.production or .env found (see .dev.vars.example)");
+  process.exit(1);
+}
 const env = Object.fromEntries(
-  readFileSync(".env", "utf-8")
+  readFileSync(envFile, "utf-8")
     .split("\n")
     .filter((l) => l && !l.startsWith("#"))
-    .map((l) => l.split("=").map((s) => s.trim()))
+    .map((l) => {
+      const i = l.indexOf("=");
+      return [l.slice(0, i).trim(), l.slice(i + 1).trim()];
+    }),
 );
 
 const token = env.REFRESH_SECRET;
 if (!token) {
-  console.error("REFRESH_SECRET not found in .env");
+  console.error(`REFRESH_SECRET not found in ${envFile}`);
   process.exit(1);
 }
 

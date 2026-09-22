@@ -1,39 +1,33 @@
-import { ModelEntry, FilterParams, Env } from "./types";
-import { getModels, getMeta } from "./data";
+import { getMeta, getModels } from "./data";
 import { buildInspectCostExport, renderInspectCostsYaml } from "./inspect";
+import type { Env, FilterParams, ModelEntry } from "./types";
 
 function parseFilterParams(url: URL): FilterParams {
   const params: FilterParams = {};
   const p = url.searchParams;
 
+  // biome-ignore-start lint/style/noNonNullAssertion: each get() is guarded by the has() check on the same line
   if (p.has("provider")) params.provider = p.get("provider")!;
   if (p.has("mode")) params.mode = p.get("mode")!;
   if (p.has("q")) params.q = p.get("q")!;
   if (p.has("sort")) params.sort = p.get("sort")!;
-  if (p.has("order"))
-    params.order = p.get("order") === "asc" ? "asc" : "desc";
+  if (p.has("order")) params.order = p.get("order") === "asc" ? "asc" : "desc";
   if (p.has("limit")) params.limit = parseInt(p.get("limit")!, 10);
   if (p.has("offset")) params.offset = parseInt(p.get("offset")!, 10);
   if (p.has("supports")) params.supports = p.get("supports")!;
-  if (p.has("max_input_cost"))
-    params.max_input_cost = parseFloat(p.get("max_input_cost")!);
-  if (p.has("min_context"))
-    params.min_context = parseInt(p.get("min_context")!, 10);
+  if (p.has("max_input_cost")) params.max_input_cost = parseFloat(p.get("max_input_cost")!);
+  if (p.has("min_context")) params.min_context = parseInt(p.get("min_context")!, 10);
+  // biome-ignore-end lint/style/noNonNullAssertion: each get() is guarded by the has() check on the same line
 
   return params;
 }
 
-export function applyFilters(
-  models: ModelEntry[],
-  params: FilterParams
-): ModelEntry[] {
+export function applyFilters(models: ModelEntry[], params: FilterParams): ModelEntry[] {
   let result = models;
 
   if (params.provider) {
     const prov = params.provider.toLowerCase();
-    result = result.filter(
-      (m) => m.litellm_provider?.toLowerCase() === prov
-    );
+    result = result.filter((m) => m.litellm_provider?.toLowerCase() === prov);
   }
 
   if (params.mode) {
@@ -52,7 +46,7 @@ export function applyFilters(
       return (s: string) => s.includes(term);
     });
     result = result.filter((m) => {
-      const haystack = m.key.toLowerCase() + " " + (m.litellm_provider?.toLowerCase() ?? "");
+      const haystack = `${m.key.toLowerCase()} ${m.litellm_provider?.toLowerCase() ?? ""}`;
       return matchers.every((fn) => fn(haystack));
     });
   }
@@ -63,21 +57,22 @@ export function applyFilters(
       flags.every((flag) => {
         const key = flag.startsWith("supports_") ? flag : `supports_${flag}`;
         return (m as Record<string, unknown>)[key] === true;
-      })
+      }),
     );
   }
 
   if (params.max_input_cost !== undefined) {
     result = result.filter(
       (m) =>
-        m.input_cost_per_token !== undefined &&
-        m.input_cost_per_token <= params.max_input_cost!
+        // biome-ignore lint/style/noNonNullAssertion: narrowed by the enclosing `!== undefined` check; TS can't see through the closure
+        m.input_cost_per_token !== undefined && m.input_cost_per_token <= params.max_input_cost!,
     );
   }
 
   if (params.min_context !== undefined) {
     result = result.filter((m) => {
       const ctx = m.max_input_tokens ?? m.max_tokens ?? 0;
+      // biome-ignore lint/style/noNonNullAssertion: narrowed by the enclosing `!== undefined` check; TS can't see through the closure
       return ctx >= params.min_context!;
     });
   }
@@ -91,8 +86,7 @@ export function applyFilters(
       if (va === undefined && vb === undefined) return 0;
       if (va === undefined) return 1;
       if (vb === undefined) return -1;
-      if (typeof va === "number" && typeof vb === "number")
-        return (va - vb) * dir;
+      if (typeof va === "number" && typeof vb === "number") return (va - vb) * dir;
       return String(va).localeCompare(String(vb)) * dir;
     });
   }
@@ -102,7 +96,7 @@ export function applyFilters(
 
 function paginate(
   models: ModelEntry[],
-  params: FilterParams
+  params: FilterParams,
 ): { data: ModelEntry[]; total: number } {
   const total = models.length;
   const offset = params.offset ?? 0;
@@ -141,10 +135,7 @@ function parseInspectModelParams(url: URL): string[] {
   return requested.map((value) => value.trim()).filter(Boolean);
 }
 
-export async function handleApiRequest(
-  url: URL,
-  env: Env
-): Promise<Response | null> {
+export async function handleApiRequest(url: URL, env: Env): Promise<Response | null> {
   const path = url.pathname;
 
   if (path === "/api/models") {
@@ -168,9 +159,7 @@ export async function handleApiRequest(
 
   if (path === "/api/modes") {
     const models = await getModels(env);
-    const modes = [
-      ...new Set(models.map((m) => m.mode).filter(Boolean)),
-    ].sort();
+    const modes = [...new Set(models.map((m) => m.mode).filter(Boolean))].sort();
     return json({ modes });
   }
 
@@ -187,7 +176,7 @@ export async function handleApiRequest(
           error:
             "At least one model is required. Provide ?model=openai/gpt-4o or ?models=openai/gpt-4o,anthropic/claude-sonnet-4-5",
         },
-        400
+        400,
       );
     }
 
@@ -209,15 +198,12 @@ export async function handleApiRequest(
           error: "One or more requested models could not be resolved",
           unresolved: result.unresolved,
         },
-        400
+        400,
       );
     }
 
     if (format === "yaml") {
-      return text(
-        renderInspectCostsYaml(result.costs),
-        "application/yaml; charset=utf-8"
-      );
+      return text(renderInspectCostsYaml(result.costs), "application/yaml; charset=utf-8");
     }
 
     return json(result.costs);
@@ -256,15 +242,13 @@ function openApiSpec(url: URL) {
               name: "provider",
               in: "query",
               schema: { type: "string" },
-              description:
-                "Filter by provider (e.g. openai, anthropic, bedrock)",
+              description: "Filter by provider (e.g. openai, anthropic, bedrock)",
             },
             {
               name: "mode",
               in: "query",
               schema: { type: "string" },
-              description:
-                "Filter by mode (chat, embedding, completion, image_generation, etc.)",
+              description: "Filter by mode (chat, embedding, completion, image_generation, etc.)",
             },
             {
               name: "q",
@@ -276,8 +260,7 @@ function openApiSpec(url: URL) {
               name: "sort",
               in: "query",
               schema: { type: "string" },
-              description:
-                "Sort by field (e.g. input_cost_per_token, max_input_tokens)",
+              description: "Sort by field (e.g. input_cost_per_token, max_input_tokens)",
             },
             {
               name: "order",
@@ -395,8 +378,7 @@ function openApiSpec(url: URL) {
               name: "model",
               in: "query",
               schema: { type: "string" },
-              description:
-                "Inspect model name. Repeat the parameter to request multiple models.",
+              description: "Inspect model name. Repeat the parameter to request multiple models.",
             },
             {
               name: "models",
@@ -409,8 +391,7 @@ function openApiSpec(url: URL) {
               name: "format",
               in: "query",
               schema: { type: "string", enum: ["json", "yaml"], default: "json" },
-              description:
-                "Export format. YAML output is suitable for --model-cost-config.",
+              description: "Export format. YAML output is suitable for --model-cost-config.",
             },
           ],
           responses: {
