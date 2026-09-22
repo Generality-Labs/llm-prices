@@ -15,8 +15,6 @@ jobs:
     # so CI fixes flow in without a bump PR per template release. Dependabot
     # is told to leave it alone in .github/dependabot.yml — don't "helpfully"
     # pin this to an exact version, or copier update will just revert it.
-    # TEMPORARY: pinned to the template branch until v1.1.0 is released, which
-    # adds the bundle dry run this repo relied on. Then switch to @v1.
-    uses: Generality-Labs/cloudflare-worker-template/.github/workflows/worker-ci.yml@feat/adoption-hardening
+    uses: Generality-Labs/cloudflare-worker-template/.github/workflows/worker-ci.yml@v1
     with:
       node-version: "26"

@@ -1,6 +1,6 @@
 # This file is auto-generated and updated by Copier; do not edit by hand.
 # Run `copier update` to pull in template changes.
-_commit: 66d7e15ec10582c014f6ee91ff0657ea936bfed9
+_commit: v1.1.0
 _src_path: gh:Generality-Labs/cloudflare-worker-template
 author_name: Generality Labs
 github_owner: Generality-Labs

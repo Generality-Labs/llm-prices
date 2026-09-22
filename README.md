@@ -44,7 +44,7 @@ Every push to `main` then deploys production through the shared `worker-deploy` 
 
 Set the `HEALTH_URL` variable on the `production` GitHub environment to `https://llm-prices.generality.org/health` to enable the post-deploy check.
 
-**Template pin.** `.copier-answers.yml`'s `_commit` records the template revision this repo was adopted from; after the template's `v1.1.0` release it must point at that tag.
+**Template pin.** `.copier-answers.yml`'s `_commit` records the release tag of the template this repo is aligned with (currently `v1.1.0`); running `uvx copier update` moves it forward.
 
 Cloudflare Workers Builds is no longer used. Disconnect the Builds connection on the `llm-prices` Worker (**Settings > Builds**) before merging a change that introduces the named environments: Builds runs a bare `npx wrangler deploy`, which now resolves the local-only top-level config and would create a stray `llm-prices-dev` Worker instead of deploying production.
 

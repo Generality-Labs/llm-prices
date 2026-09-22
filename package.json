@@ -6,6 +6,7 @@
   "engines": {
     "node": ">=26"
   },
+  "license": "MIT",
   "scripts": {
     "dev": "wrangler dev",
     "typecheck": "wrangler types --include-runtime=false && tsc --noEmit",
