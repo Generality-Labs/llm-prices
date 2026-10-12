@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - `GET /health`; worker-runtime tests; Biome, pre-commit, Dependabot.
+- `openrouter/<provider>/<model>` names resolve again: the refresh also caches OpenRouter's model list, at OpenRouter's rates, since LiteLLM dropped its OpenRouter rows.
 
 ### Changed
 
