@@ -1,6 +1,6 @@
 # LLM Prices
 
-A Cloudflare Worker that caches [litellm's model pricing data](https://github.com/BerriAI/litellm) and provides:
+A Cloudflare Worker that caches [litellm's model pricing data](https://github.com/BerriAI/litellm), plus [OpenRouter's model list](https://openrouter.ai/api/v1/models) for `openrouter/...` models, and provides:
 
 - **Web UI** — filterable, sortable table of all LLM model prices
 - **REST API** — query models by provider, mode, capabilities, cost, and context window
@@ -177,6 +177,7 @@ curl "https://llm-prices.generality.org/api/inspect-costs?model=anthropic/claude
 Provider naming notes:
 
 - Use Inspect-style provider prefixes such as `openai`, `anthropic`, `google`, `openrouter`, `groq`, `ollama`, `bedrock`, `azureai`, `cf`, `fireworks`, `together`, and `perplexity`.
+- `openrouter/<provider>/<model>` names are priced from OpenRouter's own model list, at OpenRouter's rates (which can differ from the first-party provider's). LiteLLM no longer carries OpenRouter rows.
 - The service maps common Inspect names to LiteLLM dataset keys where they differ, for example:
   - `google/...` -> `gemini/...`
   - `azureai/...` -> `azure_ai/...`

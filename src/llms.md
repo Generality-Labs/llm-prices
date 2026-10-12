@@ -1,8 +1,8 @@
 # LLM Prices
 
-> A filterable, sortable directory of LLM model pricing data sourced from litellm. Provides a REST API and web UI for exploring costs, context windows, and capabilities across 2,700+ models from 100+ providers.
+> A filterable, sortable directory of LLM model pricing data sourced from litellm, plus OpenRouter's model list for `openrouter/...` models. Provides a REST API and web UI for exploring costs, context windows, and capabilities across 2,700+ models from 100+ providers.
 
-Data is refreshed every 6 hours from [litellm](https://github.com/BerriAI/litellm).
+Data is refreshed every 6 hours from [litellm](https://github.com/BerriAI/litellm) and [OpenRouter](https://openrouter.ai/api/v1/models).
 
 ## API
 

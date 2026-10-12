@@ -1,3 +1,8 @@
+import {
+  OPENROUTER_MODELS_URL,
+  type OpenRouterModelsResponse,
+  openRouterEntries,
+} from "./openrouter";
 import type { Env, ModelEntry } from "./types";
 
 const SOURCE_URL =
@@ -6,17 +11,33 @@ const SOURCE_URL =
 const KV_KEY = "model_prices";
 const KV_META_KEY = "model_prices_meta";
 
-export async function fetchAndCache(env: Env): Promise<{ count: number }> {
-  const resp = await fetch(SOURCE_URL);
+async function fetchJson<T>(url: string): Promise<T> {
+  const resp = await fetch(url);
   if (!resp.ok) {
-    throw new Error(`Failed to fetch source: ${resp.status} ${resp.statusText}`);
+    throw new Error(`Failed to fetch ${url}: ${resp.status} ${resp.statusText}`);
   }
-  const raw = await resp.text();
-  await env.MODEL_PRICES.put(KV_KEY, raw);
+  return resp.json();
+}
+
+/**
+ * LiteLLM no longer carries OpenRouter rows, so those come from OpenRouter's
+ * own model list. Both sources are written in one KV value: if either fetch
+ * fails, the previous cache stays in place.
+ */
+export async function fetchAndCache(env: Env): Promise<{ count: number }> {
+  const [litellm, openrouter] = await Promise.all([
+    fetchJson<Record<string, unknown>>(SOURCE_URL),
+    fetchJson<OpenRouterModelsResponse>(OPENROUTER_MODELS_URL),
+  ]);
+  const merged = { ...litellm };
+  for (const { key, ...entry } of openRouterEntries(openrouter)) {
+    merged[key] = entry;
+  }
+
+  await env.MODEL_PRICES.put(KV_KEY, JSON.stringify(merged));
   await env.MODEL_PRICES.put(KV_META_KEY, JSON.stringify({ updated_at: new Date().toISOString() }));
 
-  const parsed = JSON.parse(raw);
-  const count = Object.keys(parsed).filter((k) => k !== "sample_spec").length;
+  const count = Object.keys(merged).filter((k) => k !== "sample_spec").length;
   return { count };
 }
 

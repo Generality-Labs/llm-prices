@@ -1,5 +1,6 @@
 import { createExecutionContext, env, waitOnExecutionContext } from "cloudflare:test";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { fetchAndCache, getModels } from "../src/data";
 import worker from "../src/index";
 
 describe("GET /health", () => {
@@ -72,6 +73,53 @@ describe("GET /api/models with data in KV", () => {
     expect(body.data).toEqual([
       { key: "gpt-4o", litellm_provider: "openai", mode: "chat", input_cost_per_token: 0.0000025 },
     ]);
+  });
+});
+
+describe("fetchAndCache", () => {
+  const litellm = {
+    sample_spec: { litellm_provider: "sample", mode: "chat" },
+    "gpt-4o": { litellm_provider: "openai", mode: "chat", input_cost_per_token: 0.0000025 },
+  };
+  const openrouter = {
+    data: [
+      {
+        id: "openai/gpt-oss-20b",
+        context_length: 131072,
+        architecture: { input_modalities: ["text"], output_modalities: ["text"] },
+        pricing: { prompt: "0.000000018", completion: "0.00000009" },
+        top_provider: { context_length: 131072, max_completion_tokens: 32768 },
+        supported_parameters: [],
+      },
+    ],
+  };
+
+  function stubSources(openrouterResponse: Response): void {
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = input instanceof Request ? input.url : String(input);
+      return url.startsWith("https://openrouter.ai/") ? openrouterResponse : Response.json(litellm);
+    });
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("caches LiteLLM and OpenRouter rows together", async () => {
+    stubSources(Response.json(openrouter));
+
+    expect(await fetchAndCache(env)).toEqual({ count: 2 });
+
+    const models = await getModels(env);
+    expect(models.map((m) => m.key)).toEqual(["gpt-4o", "openrouter/openai/gpt-oss-20b"]);
+  });
+
+  it("keeps the previous cache when OpenRouter is unavailable", async () => {
+    await env.MODEL_PRICES.put("model_prices", JSON.stringify({ previous: {} }));
+    stubSources(new Response("unavailable", { status: 503 }));
+
+    await expect(fetchAndCache(env)).rejects.toThrow("503");
+    expect(await env.MODEL_PRICES.get("model_prices")).toBe(JSON.stringify({ previous: {} }));
   });
 });
 
